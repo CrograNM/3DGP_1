@@ -3,6 +3,8 @@
 
 #include "stdafx.h"
 #include "LabProject02.h"
+#include "GameFramework.h"
+CGameFramework gGameFramework; // 게임 프로그램의 골격을 나타내는 객체
 
 #define MAX_LOADSTRING 100
 
@@ -42,15 +44,25 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     MSG msg;
 
-    // 기본 메시지 루프입니다:
-    while (GetMessage(&msg, nullptr, 0, 0))
+    // 변경된 메시지 루프 --
+    while (1)
     {
-        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+        if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            if (msg.message == WM_QUIT) break;
+            if (!::TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+            {
+                ::TranslateMessage(&msg);
+                ::DispatchMessage(&msg);
+            }
+        }
+        else
+        {
+            gGameFramework.FrameAdvance();
         }
     }
+    gGameFramework.OnDestroy();
+    // -- message loop
 
     return (int) msg.wParam;
 }
@@ -76,7 +88,9 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_LABPROJECT02));
     wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_LABPROJECT02);
+
+    wcex.lpszMenuName = NULL;
+
     wcex.lpszClassName  = szWindowClass;
     wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
@@ -95,22 +109,20 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
+    RECT rc = { 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT };
     DWORD dwStyle = WS_OVERLAPPED | WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU | WS_BORDER;
-    RECT rc = { 0, 0, 640, 480 };
     AdjustWindowRect(&rc, dwStyle, FALSE);
 
-    hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
-
-    HWND hWnd = CreateWindow(szWindowClass, szTitle, dwStyle, CW_USEDEFAULT, CW_USEDEFAULT,
+    HWND hMainWnd = CreateWindow(szWindowClass, szTitle, dwStyle, CW_USEDEFAULT, CW_USEDEFAULT,
         rc.right - rc.left, rc.bottom - rc.top, NULL, NULL, hInstance, NULL);
 
-    if (!hWnd)
-    {
-        return FALSE;
-    }
+    if (!hMainWnd) return FALSE;
+    
 
-    ShowWindow(hWnd, nCmdShow);
-    UpdateWindow(hWnd);
+    gGameFramework.OnCreate(hInstance, hMainWnd);
+
+    ShowWindow(hMainWnd, nCmdShow);
+    UpdateWindow(hMainWnd);
 
     return TRUE;
 }
@@ -129,30 +141,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
-    case WM_COMMAND:
-        {
-            int wmId = LOWORD(wParam);
-            // 메뉴 선택을 구문 분석합니다:
-            switch (wmId)
-            {
-            case IDM_ABOUT:
-                DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-                break;
-            case IDM_EXIT:
-                DestroyWindow(hWnd);
-                break;
-            default:
-                return DefWindowProc(hWnd, message, wParam, lParam);
-            }
-        }
-        break;
-    case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
-            EndPaint(hWnd, &ps);
-        }
+    case WM_SIZE:
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_MOUSEMOVE:
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+        gGameFramework.OnProcessingWindowMessage(hWnd, message, wParam, lParam);
         break;
     case WM_DESTROY:
         PostQuitMessage(0);

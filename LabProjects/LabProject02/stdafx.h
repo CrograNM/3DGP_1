@@ -14,7 +14,7 @@
 #include <memory.h>
 #include <tchar.h>
 
-// Direct3D 관련 헤더 파일
+// Direct3D : 관련 헤더 파일
 #include <string>
 #include <wrl.h>
 #include <shellapi.h>
@@ -35,13 +35,13 @@ using namespace DirectX::PackedVector;
 
 using Microsoft::WRL::ComPtr;
 
-// Import 라이브러리 추가
+// Direct3D : Import 라이브러리 추가
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 
 #pragma comment(lib, "dxguid.lib")
 
-// 클라이언트 영역의 크기 정의
+// Direct3D : 클라이언트 영역의 크기 정의
 #define FRAME_BUFFER_WIDTH 800
 #define FRAME_BUFFER_HEIGHT 600
